@@ -16,48 +16,73 @@ def get_claims_for_item(db: Session, item_id: int) -> list[Claim]:
     return db.query(Claim).filter(Claim.item_id == item_id).all()
 
 # TODO #1 — Implement create_item()
-# Hints:
-#   - Build an Item ORM object from item_in.model_dump()
-#   - Use db.add(), db.commit(), db.refresh(), return the new item
 def create_item(db: Session, item_in: ItemIn) -> Item:
-    ...
+    new_item = Item(**item_in.model_dump())
+    db.add(new_item)
+    db.commit()
+    db.refresh(new_item)
+    return new_item
 
 # TODO #2 — Implement update_item()
-# Hints:
-#   - Use get_one_item() to fetch; return None if not found
-#   - Loop over item_in.model_dump().items() and use setattr()
-#   - Commit, refresh, and return the updated item
 def update_item(db: Session, item_id: int, item_in: ItemIn) -> Item | None:
-    ...
+    item = get_one_item(db, item_id)
+    if not item:
+        return None
+    for key, value in item_in.model_dump().items():
+        setattr(item, key, value)
+    db.commit()
+    db.refresh(item)
+    return item
 
 # TODO #3 — Implement delete_item()
-# Hints:
-#   - Fetch with get_one_item(); return False if not found
-#   - db.delete() + db.commit(), return True
-#   - Cascade in models.py will auto-delete all related claims
 def delete_item(db: Session, item_id: int) -> bool:
-    ...
+    item = get_one_item(db, item_id)
+    if not item:
+        return False
+    db.delete(item)
+    db.commit()
+    return True
 
 # TODO #4 — Implement create_claim()
-# Hints:
-#   - Build a Claim ORM object using claim_in.model_dump(), set item_id
-#   - db.add(), db.commit(), db.refresh(), return the new claim
 def create_claim(db: Session, item_id: int, claim_in: ClaimIn) -> Claim:
-    ...
+    new_claim = Claim(item_id=item_id, **claim_in.model_dump())
+    db.add(new_claim)
+    db.commit()
+    db.refresh(new_claim)
+    return new_claim
 
 # TODO #5 — Implement get_unresolved_items()
-# Hints:
-#   - Query Item where Item.resolved == False
-#   - Apply skip and limit, return the list
 def get_unresolved_items(db: Session, skip: int = 0, limit: int = 10) -> list[Item]:
-    ...
+    return (
+        db.query(Item)
+        .filter(Item.resolved == False)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 # TODO #6 — Implement get_item_stats()
-# Hints:
-#   - Fetch the item using get_one_item(); return None if not found
-#   - Use db.query(func.count(Claim.id)).filter(Claim.item_id == item_id)
-#     for total_claims
-#   - Add a second filter for Claim.approved == True to count approved claims
-#   - Return an ItemStats object built manually (not an ORM object)
 def get_item_stats(db: Session, item_id: int):
-    ...
+    item = get_one_item(db, item_id)
+    if not item:
+        return None
+
+    total_claims = (
+        db.query(func.count(Claim.id))
+        .filter(Claim.item_id == item_id)
+        .scalar()
+    )
+
+    approved = (
+        db.query(func.count(Claim.id))
+        .filter(Claim.item_id == item_id, Claim.approved == True)
+        .scalar()
+    )
+
+    return {
+        "item_id": item_id,
+        "name": item.name,
+        "total_claims": total_claims,
+        "approved": approved,
+        "resolved": item.resolved,
+    }

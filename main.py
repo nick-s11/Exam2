@@ -47,7 +47,7 @@ async def get_claims(item_id: int, db: DB):
 #   - Call crud.create_item(), return result with status 201
 @app.post("/item", response_model=ItemOut, status_code=status.HTTP_201_CREATED)
 async def create_item(item_in: ItemIn, db: DB):
-    ...
+    return crud.create_item(db, item_in)
 
 # TODO #8 — Implement PUT /item/{item_id}
 # Requirements:
@@ -55,7 +55,10 @@ async def create_item(item_in: ItemIn, db: DB):
 #   - Return the updated ItemOut
 @app.put("/item/{item_id}", response_model=ItemOut)
 async def update_item(item_id: int, item_in: ItemIn, db: DB):
-    ...
+    updated = crud.update_item(db, item_id, item_in)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return updated
 
 # TODO #9 — Implement DELETE /item/{item_id}
 # Requirements:
@@ -63,7 +66,10 @@ async def update_item(item_id: int, item_in: ItemIn, db: DB):
 #   - Return HTTP 204 No Content
 @app.delete("/item/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_item(item_id: int, db: DB):
-    ...
+    deleted = crud.delete_item(db, item_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # TODO #10 — Implement GET /item/unresolved
 # Requirements:
@@ -73,7 +79,7 @@ async def delete_item(item_id: int, db: DB):
 #     in the final file — move it above get_item() when submitting
 @app.get("/item/unresolved", response_model=list[ItemOut])
 async def get_unresolved_items(db: DB, skip: int = 0, limit: int = 10):
-    ...
+    return crud.get_unresolved_items(db, skip=skip, limit=limit)
 
 # ✅ PROVIDED — Get stats for one item
 @app.get("/item/{item_id}/stats", response_model=ItemStats)
