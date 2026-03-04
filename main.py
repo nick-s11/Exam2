@@ -26,6 +26,16 @@ async def get_items(
     response.headers["X-Total-Count"] = str(db.query(models.Item).count())
     return items
 
+# TODO #10 — Implement GET /item/unresolved
+# Requirements:
+#   - Call crud.get_unresolved_items() with skip and limit params
+#   - Return the list of unresolved items
+#   - IMPORTANT: This route must be defined BEFORE /item/{item_id}
+#     in the final file — move it above get_item() when submitting
+@app.get("/item/unresolved", response_model=list[ItemOut])
+async def get_unresolved_items(db: DB, skip: int = 0, limit: int = 10):
+    return crud.get_unresolved_items(db, skip=skip, limit=limit)
+
 # ✅ PROVIDED — Get one item by ID
 @app.get("/item/{item_id}", response_model=ItemOut)
 async def get_item(item_id: int, db: DB):
@@ -71,15 +81,15 @@ async def delete_item(item_id: int, db: DB):
         raise HTTPException(status_code=404, detail="Item not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-# TODO #10 — Implement GET /item/unresolved
+ #TODO #10 — Implement GET /item/unresolved
 # Requirements:
 #   - Call crud.get_unresolved_items() with skip and limit params
 #   - Return the list of unresolved items
 #   - IMPORTANT: This route must be defined BEFORE /item/{item_id}
 #     in the final file — move it above get_item() when submitting
-@app.get("/item/unresolved", response_model=list[ItemOut])
-async def get_unresolved_items(db: DB, skip: int = 0, limit: int = 10):
-    return crud.get_unresolved_items(db, skip=skip, limit=limit)
+# @app.get("/item/unresolved", response_model=list[ItemOut])
+#async def get_unresolved_items(db: DB, skip: int = 0, limit: int = 10):
+   # return crud.get_unresolved_items(db, skip=skip, limit=limit)
 
 # ✅ PROVIDED — Get stats for one item
 @app.get("/item/{item_id}/stats", response_model=ItemStats)
